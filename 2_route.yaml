@@ -1,0 +1,20 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: rollouts-demo-route
+spec:
+  port:
+    targetPort: http 
+  tls: 
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: argo-rollouts-stable-service 
+    weight: 100 # This field is automatically modified to canary weight by Route Rollout plugin.
+
+
+  alternateBackends:
+    - kind: Service
+      name: argo-rollouts-canary-service 
+      weight: 30 #This field is automatically modified to canary weight by Route Rollout plugin.
