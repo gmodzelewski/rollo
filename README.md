@@ -1,7 +1,29 @@
-install argo rollouts for oc tool
-- `brew install argoproj/tap/kubectl-argo-rollouts`
+# rollo – Argo Rollouts demos (DC → Deployment migration)
 
-test 
+Demo app and manifests for **Argo Rollouts** on OpenShift (migration from DeploymentConfigs to Deployments).
+
+**Images:** `quay.io/modzelewski/rollo:v1`, `quay.io/modzelewski/rollo:v2` (from [argoproj/rollouts-demo](https://hub.docker.com/r/argoproj/rollouts-demo)).
+
+**Plan:** See [ARGO_ROLLOUTS_DEMO_PLAN.md](ARGO_ROLLOUTS_DEMO_PLAN.md).
+
+## Demos
+
+| Demo | Folder | Description |
+|------|--------|-------------|
+| 1 | [demo1/](demo1/) | First Rollout – rolling-update style; deploy v1, then set image to v2 |
+| 2 | [demo2/](demo2/) | Blue-Green – active + preview services, manual promote |
+| 3 | [demo3/](demo3/) | Canary with steps – 20% → pause → 40% → … → 100% |
+
+Each `demoN/` has a README with apply order and commands. Use one demo per namespace or apply in separate namespaces if you run multiple.
+
+## Prerequisites
+
+- Argo Rollouts controller (e.g. RolloutManager in OpenShift GitOps)
+- `kubectl` with Argo Rollouts plugin
+
+Install CLI (Mac):
+
+- `brew install argoproj/tap/kubectl-argo-rollouts`
 - `kubectl argo rollouts version`
 
 

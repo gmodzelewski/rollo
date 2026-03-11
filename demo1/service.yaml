@@ -1,0 +1,14 @@
+# Demo 1: Single service for the rollout (rolling-update style).
+apiVersion: v1
+kind: Service
+metadata:
+  name: rollo-demo-1
+  namespace: rollo-demo
+spec:
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: rollo-demo-1

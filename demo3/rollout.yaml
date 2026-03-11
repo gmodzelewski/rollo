@@ -1,0 +1,47 @@
+# Demo 3: Canary with steps – manual pause then timed steps.
+# Promote: kubectl argo rollouts promote rollo-demo-3 -n rollo-demo
+# Abort:   kubectl argo rollouts abort rollo-demo-3 -n rollo-demo
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: rollo-demo-3
+  namespace: rollo-demo
+spec:
+  replicas: 5
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: rollo-demo-3
+  template:
+    metadata:
+      labels:
+        app: rollo-demo-3
+    spec:
+      containers:
+        - name: rollo
+          image: quay.io/modzelewski/rollo:v1
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              memory: 32Mi
+              cpu: 5m
+  strategy:
+    canary:
+      canaryService: rollo-demo-3-canary
+      stableService: rollo-demo-3-stable
+      steps:
+        - setWeight: 20
+        - pause: {}
+        - setWeight: 40
+        - pause:
+            duration: 10
+        - setWeight: 60
+        - pause:
+            duration: 10
+        - setWeight: 80
+        - pause:
+            duration: 10

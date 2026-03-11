@@ -1,0 +1,29 @@
+# Demo 3: Canary – stable and canary services for step-based traffic.
+# Without a traffic provider, weight is approximated by replica ratio.
+apiVersion: v1
+kind: Service
+metadata:
+  name: rollo-demo-3-stable
+  namespace: rollo-demo
+spec:
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: rollo-demo-3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rollo-demo-3-canary
+  namespace: rollo-demo
+spec:
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: rollo-demo-3

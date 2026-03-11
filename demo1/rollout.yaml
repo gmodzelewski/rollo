@@ -1,0 +1,35 @@
+# Demo 1: First Rollout – "Deployment with a different kind"
+# Canary with no steps = rolling-update-like behavior.
+# Image: quay.io/modzelewski/rollo:v1 (then update to v2 to show rollout).
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: rollo-demo-1
+  namespace: rollo-demo
+spec:
+  replicas: 3
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: rollo-demo-1
+  template:
+    metadata:
+      labels:
+        app: rollo-demo-1
+    spec:
+      containers:
+        - name: rollo
+          image: quay.io/modzelewski/rollo:v1
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              memory: 32Mi
+              cpu: 5m
+  strategy:
+    canary:
+      # No steps = proceed to 100% like a rolling update
+      steps: []

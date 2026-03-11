@@ -1,0 +1,36 @@
+# Demo 2: Blue-Green with manual promotion.
+# activeService = production traffic; previewService = new version only.
+# Promote with: kubectl argo rollouts promote rollo-demo-2 -n rollo-demo
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: rollo-demo-2
+  namespace: rollo-demo
+spec:
+  replicas: 3
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: rollo-demo-2
+  template:
+    metadata:
+      labels:
+        app: rollo-demo-2
+    spec:
+      containers:
+        - name: rollo
+          image: quay.io/modzelewski/rollo:v1
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              memory: 32Mi
+              cpu: 5m
+  strategy:
+    blueGreen:
+      activeService: rollo-demo-2-active
+      previewService: rollo-demo-2-preview
+      autoPromotionEnabled: false
