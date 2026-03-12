@@ -1,6 +1,8 @@
-# Argo Rollouts Demo Plan: DC → Deployment Migration
+# Argo Rollouts Demo Plan: DeploymentConfig Migration
 
-Recommendations for demos to support a presentation on **migration from DeploymentConfigs to Deployments** on OpenShift, using **Argo Rollouts** (enabled via OpenShift GitOps).
+Recommendations for demos to support a presentation on **migration from DeploymentConfigs** on OpenShift, using **Argo Rollouts** (enabled via OpenShift GitOps).
+
+**Key Message:** OpenShift recommends migrating from DeploymentConfigs to standard Kubernetes Deployments. This demo plan goes one step further: **skip plain Deployments and use Argo Rollouts instead**. Rollouts manage ReplicaSets the same way Deployments do, but with Blue-Green, Canary, and progressive delivery built-in.
 
 **References:**
 - [Red Hat OpenShift GitOps – Argo Rollouts (1.19)](https://docs.redhat.com/en/documentation/red_hat_openshift_gitops/1.19/html/argo_rollouts)
@@ -38,7 +40,7 @@ Use **3–4 short demos** rather than one long one:
 - Replace the Deployment with a **Rollout** that has the same `spec.template` and `selector`.
 - Use a **canary strategy with no steps** (or a single `setWeight: 100`) so behavior is "rolling update–like."
 - **First deployment:** Deploy with one image tag (e.g. `quay.io/modzelewski/rollo:v1`).
-- **New version:** Push a second image to the same repo with a different tag (e.g. `quay.io/modzelewski/rollo:v2`). Update the Rollout to use the new tag (via manifest change or `kubectl argo rollouts set image ...`) and show the rollout progressing.
+- **New version:** Push a second image to the same repo with a different tag (e.g. `quay.io/modzelewski/rollo:v2`). Update the Rollout to use the new tag (via manifest change or `oc argo rollouts set image ...`) and show the rollout progressing.
 
 **Takeaway:** Migration from Deployment/DC to Rollout is mostly a resource kind + strategy change; no app code change. "New image pushed" → update Rollout spec → controller rolls out the new version (similar outcome to DC's ImageChange trigger, but driven by GitOps or pipeline updating the Rollout).
 
@@ -54,7 +56,7 @@ Use **3–4 short demos** rather than one long one:
   - `previewService`: new version only (for testing).
   - `autoPromotionEnabled: false` so promotion is manual.
 - Deploy new version → traffic stays on active (old); new version only on preview.
-- Manually **promote** (`kubectl argo rollouts promote <name>`) and show active switching to new version.
+- Manually **promote** (`oc argo rollouts promote <name>`) and show active switching to new version.
 - Optionally show **abort** if something is wrong.
 
 **Artifacts:** Rollout manifest + two Services (active + preview). Optional OpenShift Route pointing at the active Service.
@@ -80,20 +82,26 @@ Use **3–4 short demos** rather than one long one:
 
 ---
 
-#### 2.1 How Blue-Green and Canary relate to the DC → Deployment migration
+#### 2.1 How Blue-Green and Canary relate to the DC migration
 
 **What DeploymentConfigs gave you:** Rolling updates (maxSurge, maxUnavailable), optional ImageChange trigger (deploy when new image is pushed), lifecycle hooks (pre/mid/post), and a single "version" rolling out over time. DC did **not** provide built-in blue-green (two stacks, switch traffic) or percentage-based canary with pause points.
 
-**What the migration requirement is:** Move from DeploymentConfig to standard Kubernetes **Deployment**. Argo Rollouts sits on top of that: a **Rollout** is a different resource that manages ReplicaSets (like a Deployment) but with a configurable strategy.
+**What the migration requirement is:** Move from DeploymentConfig to standard Kubernetes **Deployment**. But we recommend **skipping Deployments** and going straight to Argo Rollouts. Why? Both Deployments and Rollouts manage ReplicaSets the same way—Rollouts just give you more control over the rollout strategy.
 
-| Need | With DeploymentConfig | With Argo Rollouts (Rollout) |
-|------|------------------------|------------------------------|
-| Rolling update when image/spec changes | ✅ Rolling strategy | ✅ Canary strategy with no steps (or single setWeight 100) — same idea |
-| "Deploy when new image is pushed" | ✅ ImageChange trigger | ✅ GitOps or pipeline updates Rollout spec (e.g. image tag); controller rolls out — same outcome, different mechanism |
-| "Test new version before it gets production traffic" | ❌ No built-in concept; often done with a second DC + second Route, manual switch | ✅ **Blue-Green:** active + preview Service, promote when ready — **solves** the same requirement in a first-class way |
-| "Roll out slowly with pause points / percentage steps" | ❌ Only maxSurge/maxUnavailable, no steps or % | ✅ **Canary with steps:** setWeight + pause (manual or duration) — **new, more capable** approach |
+**Under the hood:**
+- DeploymentConfig → ReplicaSet → Pods
+- Deployment → ReplicaSet → Pods
+- **Rollout → ReplicaSet → Pods** ← Same mechanism
 
-**Summary:** Blue-Green and Canary in Argo Rollouts **align to the migration** in two ways: (1) They **replace** patterns you may have built around DC (e.g. "two DCs + switch route" → Blue-Green with active/preview). (2) They **extend** what DC could do (e.g. Canary with steps gives you controlled, pausable rollouts that DC's rolling strategy did not offer). So they are both "what you need when moving off DC" and "more than DC had."
+| Need | DeploymentConfig | Deployment | Argo Rollouts (Rollout) |
+|------|------------------|------------|-------------------------|
+| Rolling update when image/spec changes | ✅ Rolling strategy | ✅ RollingUpdate | ✅ Canary with no steps (same idea) |
+| "Deploy when new image is pushed" | ✅ ImageChange trigger | ❌ No built-in | ✅ GitOps + Image Updater (same outcome, better audit) |
+| "Test new version before production traffic" | ❌ Manual (2 DCs + switch Route) | ❌ Manual | ✅ **Blue-Green** (active + preview, promote when ready) |
+| "Roll out slowly with pause points / percentage steps" | ❌ Only maxSurge/maxUnavailable | ❌ Only maxSurge/maxUnavailable | ✅ **Canary with steps** (setWeight + pause) |
+| Manual promotion/abort during rollout | ❌ No | ❌ No | ✅ Yes (promote/abort commands) |
+
+**Summary:** Rollouts give you everything Deployments do (ReplicaSet management, rolling updates, rollback) **plus** Blue-Green and Canary strategies. They **replace** what DC did and **extend** beyond what plain Deployments offer. You're not losing capabilities by skipping Deployments—you're gaining them.
 
 ---
 
@@ -104,7 +112,7 @@ Use **3–4 short demos** rather than one long one:
 **Cover:**
 - Put Rollout (and Services) in **Git** (e.g. same repo as `wind-turbine-app` or a dedicated demo repo).
 - Argo CD / ApplicationSet syncs the app; changing the image (or Rollout spec) in Git triggers the rollout.
-- Show sync in Argo CD UI and rollout status with `kubectl argo rollouts get rollout <name> --watch`.
+- Show sync in Argo CD UI and rollout status with `oc argo rollouts get rollout <name> --watch`.
 
 **Takeaway:** Rollouts fit the GitOps model: desired state in Git, operator/controller applies it.
 
@@ -132,9 +140,9 @@ metadata:
 ```
 
 **Commands to show:**
-- `kubectl get rolloutmanager`
-- `kubectl get pods -n openshift-gitops | grep rollout`
-- `kubectl get crd rollouts.argoproj.io`
+- `oc get rolloutmanager`
+- `oc get pods -n openshift-gitops | grep rollout`
+- `oc get crd rollouts.argoproj.io`
 
 ---
 
@@ -154,7 +162,7 @@ Prerequisite: Argo Rollouts controller is already installed (e.g. from a previou
 
 ## 4. Practical tips
 
-- **kubectl plugin:** Install [Argo Rollouts kubectl plugin](https://argo-rollouts.readthedocs.io/en/stable/installation/#kubectl-plugin-installation) so you can use `kubectl argo rollouts get rollout … --watch`, `promote`, `abort`, `set image`.
+- **oc plugin:** Install [Argo Rollouts oc plugin](https://argo-rollouts.readthedocs.io/en/stable/installation/#oc-plugin-installation) so you can use `oc argo rollouts get rollout … --watch`, `promote`, `abort`, `set image`.
 - **Demo app:** Use **`quay.io/modzelewski/rollo`** with two (or more) version tags (e.g. `v1`, `v2`). Base the app on the [official Argo Rollouts demo](https://github.com/argoproj/argo-rollouts) so the UI shows which version is serving. Push both tags to the repo before the demo so "new image pushed" is just updating the Rollout to the next tag.
 - **Scripts:** Consider a small script or doc per demo (e.g. `apply rollout + service`, `set image` to next tag, `promote`) so you can re-run reliably during the presentation.
 - **Slides:** One slide per demo with: goal, what you show, one key takeaway. For Blue-Green and Canary, include the migration alignment (replaces DC patterns / extends beyond DC).
@@ -163,9 +171,10 @@ Prerequisite: Argo Rollouts controller is already installed (e.g. from a previou
 
 ## 5. Mapping to your narrative
 
-- **"Why move off DeploymentConfigs?"** → Standard Kubernetes Deployments + Argo Rollouts give more control and align with GitOps.
-- **"Is migration hard?"** → Demo 1 (same template, new kind + strategy; two image tags show "new version" flow).
-- **"What do we gain, and does it replace what DC did?"** → Demo 2 (Blue-Green) and Demo 3 (Canary) with [§ 2.1](#21-how-blue-green-and-canary-relate-to-the-dc--deployment-migration): Blue-Green replaces "two DCs + switch route"; Canary extends beyond DC's rolling strategy.
+- **"Why move off DeploymentConfigs?"** → OpenShift says: move to Deployments. We say: skip to Rollouts for more control and GitOps alignment.
+- **"Why skip Deployments?"** → Rollouts manage ReplicaSets the same way Deployments do, but with Blue-Green, Canary, and progressive delivery. You don't lose anything; you gain features.
+- **"Is migration hard?"** → Demo 1 (same pod template, new kind + strategy; two image tags show "new version" flow).
+- **"What do we gain?"** → Demo 2 (Blue-Green) and Demo 3 (Canary) with [§ 2.1](#21-how-blue-green-and-canary-relate-to-the-dc-migration): Blue-Green replaces "two DCs + switch route"; Canary extends beyond what DC or plain Deployment offer.
 - **"How does it fit our GitOps?"** → Optional Demo 4 (Rollout in Git, Argo CD sync).
 - **"How do we get Rollouts on OpenShift?"** → Demo last (RolloutManager at the end of the presentation).
 

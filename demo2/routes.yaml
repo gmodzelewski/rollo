@@ -1,0 +1,42 @@
+# OpenShift Routes for Demo 2 (Blue-Green)
+# Two routes: one for active (production), one for preview (testing)
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: rollo-demo-2-active
+  namespace: rollo-demo
+  labels:
+    app: rollo-demo-2
+    service: active
+spec:
+  to:
+    kind: Service
+    name: rollo-demo-2-active  # Production traffic
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: rollo-demo-2-preview
+  namespace: rollo-demo
+  labels:
+    app: rollo-demo-2
+    service: preview
+spec:
+  to:
+    kind: Service
+    name: rollo-demo-2-preview  # Preview/testing traffic
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

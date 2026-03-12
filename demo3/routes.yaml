@@ -1,0 +1,45 @@
+# OpenShift Routes for Demo 3 (Canary with steps)
+# Two routes: one for stable, one for canary
+# Note: Without traffic provider integration, these routes will load-balance
+# across all pods. For true percentage-based routing, configure Argo Rollouts
+# with OpenShift Route traffic management.
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: rollo-demo-3-stable
+  namespace: rollo-demo
+  labels:
+    app: rollo-demo-3
+    service: stable
+spec:
+  to:
+    kind: Service
+    name: rollo-demo-3-stable  # Stable version traffic
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: rollo-demo-3-canary
+  namespace: rollo-demo
+  labels:
+    app: rollo-demo-3
+    service: canary
+spec:
+  to:
+    kind: Service
+    name: rollo-demo-3-canary  # Canary version traffic
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

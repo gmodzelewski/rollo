@@ -1,0 +1,18 @@
+# OpenShift Route for Demo 1
+# Exposes the service externally via HTTPS
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: rollo-demo-1
+  namespace: rollo-demo
+spec:
+  to:
+    kind: Service
+    name: rollo-demo-1
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

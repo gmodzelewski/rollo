@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: rollo
-          image: quay.io/modzelewski/rollo:v1
+          image: quay.io/modzelewski/rollo:v1  # Change to v2 to trigger rollout
           imagePullPolicy: Always
           ports:
             - name: http
@@ -31,6 +31,12 @@ spec:
               cpu: 5m
   strategy:
     blueGreen:
+      # Production traffic goes to this service
       activeService: rollo-demo-2-active
+      # New version (preview/testing) goes to this service
       previewService: rollo-demo-2-preview
+      # Manual promotion required (you control when production switches)
+      # Set to true for automatic promotion after previewReplicaCount is ready
       autoPromotionEnabled: false
+      # Optional: Keep old version for N seconds after promotion (for quick rollback)
+      scaleDownDelaySeconds: 30
