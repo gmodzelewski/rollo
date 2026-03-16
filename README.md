@@ -10,8 +10,8 @@ Demo app and manifests for **Argo Rollouts** on OpenShift.
 
 ## Quick Start
 
-1. **Read the plan:** [ARGO_ROLLOUTS_DEMO_PLAN.md](ARGO_ROLLOUTS_DEMO_PLAN.md) (original demo strategy)
-2. **Follow the presentation:** [PRESENTATION_FLOW.md](PRESENTATION_FLOW.md) (complete flow with slides and talking points)
+1. **Complete presentation script:** [PRESENTATION_SCRIPT.md](PRESENTATION_SCRIPT.md) ⭐ **NEW** - One file with everything: slides, demos, talking points, commands
+2. **Read the plan:** [ARGO_ROLLOUTS_DEMO_PLAN.md](ARGO_ROLLOUTS_DEMO_PLAN.md) (original demo strategy)
 3. **Run the demos:** See table below
 4. **Learn migration:** [conversion-example.md](conversion-example.md) (DC → Rollout examples)
 5. **Get answers:** [FAQ.md](FAQ.md) (common questions)
@@ -20,11 +20,17 @@ Demo app and manifests for **Argo Rollouts** on OpenShift.
 
 ## Demos
 
-| Demo | Folder | Description | Strategy | Includes |
-|------|--------|-------------|----------|----------|
-| 1 | [demo1/](demo1/) | First Rollout – rolling-update style | Canary (no steps) | Rollout, Service, Route |
-| 2 | [demo2/](demo2/) | Blue-Green – preview then promote | Blue-Green | Rollout, Services (2), Routes (2) |
-| 3 | [demo3/](demo3/) | Canary with steps – progressive rollout | Canary (with steps) | Rollout, Services (2), Routes (2) |
+| Demo | Folder | Description | Strategy | Includes | Duration |
+|------|--------|-------------|----------|----------|----------|
+| 1 | [demo1/](demo1/) | First Rollout – rolling-update style | Canary (no steps) | Rollout, Service, Route | 8 min |
+| 2 | [demo2/](demo2/) | Blue-Green – preview then promote | Blue-Green | Rollout, Services (2), Routes (2) | 8 min |
+| 3 | [demo3/](demo3/) | Canary with steps – progressive rollout | Canary (with steps) | Rollout, Services (2), Routes (2) | 8 min |
+| 4* | [demo4/](demo4/) | Auto-deploy with Image Updater | Canary (no steps) | Rollout, Service, Route, Application | 10 min |
+
+**Demo 4 is optional** - use it if:
+- Your audience heavily relies on DeploymentConfig ImageChange triggers
+- You want to show the complete GitOps automation story
+- Time permits (adds 10 minutes to presentation)
 
 Each `demoN/` has a detailed README with:
 - Apply order and commands (using `oc` CLI)
@@ -32,7 +38,7 @@ Each `demoN/` has a detailed README with:
 - Visual examples and browser demo instructions
 - Key takeaways and next steps
 
-**Namespace:** All demos use `rollo-demo` namespace. You can run all three simultaneously (different Rollout names).
+**Namespace:** All demos use `rollo-demo` namespace. You can run all simultaneously (different Rollout names).
 
 **OpenShift-specific:** All demos include OpenShift Routes for external access. Commands use `oc` CLI.
 

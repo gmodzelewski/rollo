@@ -61,12 +61,11 @@ spec:
 
 ## Apply Demo
 
-### 1. Create namespace and resources
+### 1. Create resources
 ```bash
-oc apply -f namespace.yaml
 oc apply -f service.yaml
 oc apply -f rollout.yaml
-oc apply -f route.yaml  # OpenShift Route for external access
+oc apply -f route.yaml
 ```
 
 ### 2. Watch rollout status

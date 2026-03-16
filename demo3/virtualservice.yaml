@@ -1,0 +1,27 @@
+# VirtualService for Demo 3 (Service Mesh 3 — Ambient mode)
+#
+# IMPORTANT: This VirtualService is MANAGED by Argo Rollouts!
+# The weights defined here are INITIAL STATE only.
+# During rollout, Argo Rollouts will automatically update these weights.
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: rollo-demo-3-vsvc
+  namespace: rollo-demo
+spec:
+  hosts:
+    - rollo-demo-3-stable
+  http:
+    - name: primary
+      route:
+        - destination:
+            host: rollo-demo-3-stable
+            port:
+              number: 80
+          weight: 100
+        - destination:
+            host: rollo-demo-3-canary
+            port:
+              number: 80
+          weight: 0

@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rollo-demo-4
+  namespace: openshift-gitops
+  annotations:
+    # Image Updater Configuration
+    # Which image to watch (format: <alias>=<image-name>)
+    argocd-image-updater.argoproj.io/image-list: rollo=quay.io/modzelewski/rollo
+
+    # Update strategy: latest, semver, digest, name
+    argocd-image-updater.argoproj.io/rollo.update-strategy: latest
+
+    # Write back method: git or argocd
+    # git = commits to Git repo (recommended for GitOps)
+    argocd-image-updater.argoproj.io/write-back-method: git
+
+    # Git branch to commit to
+    argocd-image-updater.argoproj.io/git-branch: main
+
+    # Optional: Specify which Git credentials to use
+    # Format: git:secret:<namespace>/<secret-name>
+    # argocd-image-updater.argoproj.io/write-back-target: "git:secret:openshift-gitops/git-creds"
+
+    # Optional: Custom commit message template
+    # argocd-image-updater.argoproj.io/git-commit-message: |
+    #   build: automatic update of {{ .AppName }}
+    #
+    #   updates image {{ .Image }} tag '{{ .OldTag }}' to '{{ .NewTag }}'
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/gmodzelewski/rollo.git
+    path: demo4
+    targetRevision: main
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: rollo-demo
+
+  syncPolicy:
+    automated:
+      prune: true      # Delete resources when removed from Git
+      selfHeal: true   # Sync when cluster state drifts from Git
+    syncOptions:
+      - CreateNamespace=true

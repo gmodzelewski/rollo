@@ -24,12 +24,11 @@
 
 ## Apply Demo
 
-### 1. Create namespace, services, and rollout
+### 1. Create services and rollout
 ```bash
-oc apply -f namespace.yaml
-oc apply -f services.yaml  # Creates both active and preview services
+oc apply -f services.yaml
 oc apply -f rollout.yaml
-oc apply -f routes.yaml    # Creates Routes for active and preview services
+oc apply -f routes.yaml
 ```
 
 ### 2. Watch rollout status

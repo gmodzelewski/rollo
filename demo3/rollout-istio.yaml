@@ -1,0 +1,73 @@
+# Demo 3: Canary with steps + Istio traffic routing (Service Mesh 3)
+# Progressive rollout: 20% → 40% → 60% → 80% → 100%
+# WITH EXACT TRAFFIC PERCENTAGES via Istio VirtualService
+#
+# Promote: oc argo rollouts promote rollo-demo-3 -n rollo-demo
+# Abort:   oc argo rollouts abort rollo-demo-3 -n rollo-demo
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: rollo-demo-3
+  namespace: rollo-demo
+spec:
+  replicas: 5  # 5 replicas (but traffic is controlled by Istio, not replica ratio)
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: rollo-demo-3
+  template:
+    metadata:
+      labels:
+        app: rollo-demo-3
+    spec:
+      containers:
+        - name: rollo
+          image: quay.io/modzelewski/rollo:v1  # Change to v2 to trigger canary rollout
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              memory: 32Mi
+              cpu: 5m
+  strategy:
+    canary:
+      # New version (canary) traffic goes to this service
+      canaryService: rollo-demo-3-canary
+      # Stable version traffic goes to this service
+      stableService: rollo-demo-3-stable
+
+      # ISTIO TRAFFIC ROUTING - This is the key configuration!
+      trafficRouting:
+        istio:
+          virtualService:
+            name: rollo-demo-3-vsvc  # VirtualService to manipulate
+            routes:
+              - primary              # Route name within VirtualService (matches http[].name)
+
+      steps:
+        # Step 1: 20% to canary - Argo Rollouts will set VirtualService to 80/20
+        - setWeight: 20
+        # Manual pause: requires "oc argo rollouts promote" to continue
+        - pause: {}
+
+        # Step 2: 40% to canary - Argo Rollouts will set VirtualService to 60/40
+        - setWeight: 40
+        # Automatic pause: advances after 10 seconds
+        - pause:
+            duration: 10
+
+        # Step 3: 60% to canary - Argo Rollouts will set VirtualService to 40/60
+        - setWeight: 60
+        - pause:
+            duration: 10
+
+        # Step 4: 80% to canary - Argo Rollouts will set VirtualService to 20/80
+        - setWeight: 80
+        - pause:
+            duration: 10
+
+        # Final step: 100% (VirtualService to 0/100) - implicit, no need to specify
