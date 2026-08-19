@@ -1,0 +1,17 @@
+# OpenShift Route → Istio Gateway Service (the proxy), not the app.
+# Needed when Gateway status.addresses is only a ClusterIP hostname.
+# Do not point a Route at rollo-demo-4-stable — that skips the waypoint.
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: rollo-demo-4-gw
+  namespace: argo-rollouts-demo-4
+spec:
+  to:
+    kind: Service
+    name: rollo-demo-4-gateway-istio
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

@@ -1,0 +1,15 @@
+# Waypoint proxy for argo-rollouts-demo-4 (Service Mesh 3 ambient).
+# Enforces the split HTTPRoute (parentRef = stable Service).
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: rollo-demo-4-waypoint
+  namespace: argo-rollouts-demo-4
+  labels:
+    istio.io/waypoint-for: service
+spec:
+  gatewayClassName: istio-waypoint
+  listeners:
+    - name: mesh
+      port: 15008
+      protocol: HBONE

@@ -1,0 +1,21 @@
+# Waypoint-enforced canary split. Argo Rollouts Gateway API plugin updates weights.
+# parentRef is the stable Service (OSSM 3 ambient pattern), not the ingress Gateway.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: rollo-demo-4-split
+  namespace: argo-rollouts-demo-4
+spec:
+  parentRefs:
+    - group: ""
+      kind: Service
+      name: rollo-demo-4-stable
+      port: 80
+  rules:
+    - backendRefs:
+        - name: rollo-demo-4-stable
+          port: 80
+          weight: 100
+        - name: rollo-demo-4-canary
+          port: 80
+          weight: 0

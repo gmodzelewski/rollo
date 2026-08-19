@@ -1,11 +1,11 @@
 # Demo 2: Blue-Green with manual promotion.
 # activeService = production traffic; previewService = new version only.
-# Promote with: kubectl argo rollouts promote rollo-demo-2 -n rollo-demo
+# Promote with: oc argo rollouts promote rollo-demo-2 -n argo-rollouts-demo-2
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: rollo-demo-2
-  namespace: rollo-demo
+  namespace: argo-rollouts-demo-2
 spec:
   replicas: 3
   revisionHistoryLimit: 2

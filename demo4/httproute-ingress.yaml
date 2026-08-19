@@ -1,0 +1,15 @@
+# North-south attach: Istio Gateway → stable Service (100%).
+# Canary percentages are NOT here; see httproute-split.yaml.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: rollo-demo-4-ingress
+  namespace: argo-rollouts-demo-4
+spec:
+  parentRefs:
+    - name: rollo-demo-4-gateway
+      namespace: argo-rollouts-demo-4
+  rules:
+    - backendRefs:
+        - name: rollo-demo-4-stable
+          port: 80

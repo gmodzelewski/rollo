@@ -1,0 +1,26 @@
+# OSSM 3 Istio Gateway — north-south data plane (the proxy).
+# Connectivity Link/Kuadrant is policy only; kuadrant.io/gateway lets it adopt this
+# Gateway later. Do not use gatewayClassName: openshift-default here (skips waypoint).
+#
+# If the platform already has a shared Connectivity Link Gateway, omit this file
+# and point httproute-ingress.yaml parentRefs at that Gateway instead.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: rollo-demo-4-gateway
+  namespace: argo-rollouts-demo-4
+  labels:
+    kuadrant.io/gateway: "true"
+  # OpenShift has no cloud LB here; default LoadBalancer stays pending and
+  # Programmed=False. ClusterIP lets Istio assign the Service hostname.
+  annotations:
+    networking.istio.io/service-type: ClusterIP
+spec:
+  gatewayClassName: istio
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: Same

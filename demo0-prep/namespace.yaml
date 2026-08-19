@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argo-rollouts-demo-1
+  labels:
+    app.kubernetes.io/part-of: rollo-demos
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argo-rollouts-demo-2
+  labels:
+    app.kubernetes.io/part-of: rollo-demos
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argo-rollouts-demo-3
+  labels:
+    app.kubernetes.io/part-of: rollo-demos
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argo-rollouts-demo-4
+  labels:
+    app.kubernetes.io/part-of: rollo-demos

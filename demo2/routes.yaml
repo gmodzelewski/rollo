@@ -1,11 +1,10 @@
 # OpenShift Routes for Demo 2 (Blue-Green)
 # Two routes: one for active (production), one for preview (testing)
----
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: rollo-demo-2-active
-  namespace: rollo-demo
+  namespace: argo-rollouts-demo-2
   labels:
     app: rollo-demo-2
     service: active
@@ -25,7 +24,7 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: rollo-demo-2-preview
-  namespace: rollo-demo
+  namespace: argo-rollouts-demo-2
   labels:
     app: rollo-demo-2
     service: preview

@@ -1,28 +1,40 @@
-# OpenShift Route for Demo 3 (Canary with steps)
-#
-# Single Route with two backends: 80% to stable, 20% to canary.
-# This gives actual ~20% of traffic to the canary during the first step.
-# Argo Rollouts updates each service's selector to point at the right ReplicaSet
-# (stableService → stable pods only, canaryService → canary pods only).
-#
-# For exact traffic control (not just replica-ratio), use Service Mesh (Istio).
----
+# OpenShift Routes for Demo 3 (Canary with steps)
+# Two routes, each 100% to one Service. The controller changes Service
+# selectors (stable vs canary ReplicaSets). Route weights do not change
+# and cannot follow 20→40→60→80 — that is demo4 (Service Mesh 3).
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: rollo-demo-3
-  namespace: rollo-demo
+  name: rollo-demo-3-stable
+  namespace: argo-rollouts-demo-3
   labels:
     app: rollo-demo-3
+    service: stable
 spec:
   to:
     kind: Service
     name: rollo-demo-3-stable
-    weight: 80
-  alternateBackends:
-    - kind: Service
-      name: rollo-demo-3-canary
-      weight: 20
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: rollo-demo-3-canary
+  namespace: argo-rollouts-demo-3
+  labels:
+    app: rollo-demo-3
+    service: canary
+spec:
+  to:
+    kind: Service
+    name: rollo-demo-3-canary
+    weight: 100
   port:
     targetPort: http
   tls:

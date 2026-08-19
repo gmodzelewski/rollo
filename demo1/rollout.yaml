@@ -5,7 +5,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: rollo-demo-1
-  namespace: rollo-demo
+  namespace: argo-rollouts-demo-1
 spec:
   replicas: 3
   revisionHistoryLimit: 2
@@ -31,5 +31,7 @@ spec:
               cpu: 5m
   strategy:
     canary:
-      # No steps = proceed to 100% like a rolling update
+      # Empty steps = rolling update (not blue-green, not stepped canary)
+      maxSurge: "25%"
+      maxUnavailable: "25%"
       steps: []

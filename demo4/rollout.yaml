@@ -1,11 +1,17 @@
+# Demo 4: Canary with steps + Gateway API traffic routing (Service Mesh 3 ambient)
+# Progressive rollout: 20% → 40% → 60% → 80% → 100%
+# Exact HTTP percentages via HTTPRoute backend weights (Argo Rollouts plugin).
+#
+# Promote: oc argo rollouts promote rollo-demo-4 -n argo-rollouts-demo-4
+# Abort:   oc argo rollouts abort rollo-demo-4 -n argo-rollouts-demo-4
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: rollo-demo-4
-  namespace: rollo-demo
+  namespace: argo-rollouts-demo-4
 spec:
-  replicas: 3
-  revisionHistoryLimit: 5
+  replicas: 5  # traffic is controlled by HTTPRoute weights, not replica ratio
+  revisionHistoryLimit: 2
   selector:
     matchLabels:
       app: rollo-demo-4
@@ -16,7 +22,7 @@ spec:
     spec:
       containers:
         - name: rollo
-          image: quay.io/modzelewski/rollo:v1  # Image Updater will update this line
+          image: quay.io/modzelewski/rollo:v1  # Change to v2 to trigger canary rollout
           imagePullPolicy: Always
           ports:
             - name: http
@@ -28,7 +34,21 @@ spec:
               cpu: 5m
   strategy:
     canary:
-      # Simple rolling update (no steps)
-      steps: []
-      maxSurge: "25%"
-      maxUnavailable: "25%"
+      canaryService: rollo-demo-4-canary
+      stableService: rollo-demo-4-stable
+      trafficRouting:
+        plugins:
+          argoproj-labs/gatewayAPI:
+            httpRoute: rollo-demo-4-split
+      steps:
+        - setWeight: 20
+        - pause: {}
+        - setWeight: 40
+        - pause:
+            duration: 10
+        - setWeight: 60
+        - pause:
+            duration: 10
+        - setWeight: 80
+        - pause:
+            duration: 10

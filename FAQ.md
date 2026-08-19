@@ -166,26 +166,20 @@ If you want to keep ImageStreams:
 
 ### Q: How does Canary traffic splitting work?
 
-**A:** Two modes:
+**A:** This repo uses two modes, in that order:
 
-**1. Without Traffic Provider (replica-based):**
-- Example: 5 replicas, 20% weight → 1 canary pod, 4 stable pods
-- Traffic is load-balanced across all pods → **~20% to canary on average**
-- Simple, no additional components needed
-- **Not exact percentage control**
+**1. Replica-based ([demo 3](demo3/)):**
+- The controller rewrites `stable` / `canary` Service selectors and replica counts
+- 5 replicas, 20% weight → 1 canary pod, 4 stable pods
+- Each OpenShift Route stays 100% to one Service; Route weights do not follow the steps
+- **Not** exact HTTP percentage on a single URL
 
-**2. With Traffic Provider (route/service mesh-based):**
-- Integrates with OpenShift Routes, Istio, or other ingress controllers
-- Routes split traffic exactly: 20% → canary service, 80% → stable service
-- **Exact percentage control** regardless of replica count
-- Requires traffic provider configuration
+**2. HTTPRoute weights ([demo 4](demo4/)):**
+- Same canary steps; the Argo Rollouts Gateway API plugin updates HTTPRoute backend weights
+- Service Mesh 3 ambient waypoint enforces the split (exact 20/40/60/80)
+- A Route to the app Service skips the waypoint. A Route to the **Istio Gateway Service** is only how a browser reaches the proxy when the cluster has no LoadBalancer
 
-**Recommendation:** Start with replica-based for simplicity. Use traffic provider for production where exact percentages matter.
-
-**Supported traffic providers for OpenShift:**
-- **OpenShift Routes** (recommended for OpenShift clusters)
-- **Red Hat OpenShift Service Mesh** (Istio-based)
-- Other options: NGINX Ingress, AWS ALB, SMI (Service Mesh Interface)
+Upstream Argo also has an OpenShift Route weight plugin. These demos do not use it for exact percentages.
 
 See: https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/
 
@@ -195,15 +189,14 @@ See: https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/
 
 ### Q: Does this work with our existing OpenShift Routes?
 
-**A:** **Yes.** Rollouts are fully compatible with OpenShift Routes:
-- **Basic usage:** Point Route at the Service; Rollout manages pods behind the Service
-- **Blue-Green:** Route points to the "active" Service; Rollout switches which pods are behind it
-- **Canary with traffic management:** Argo Rollouts can integrate with OpenShift Routes to split traffic by percentage
+**A:** **Yes**, for rolling update, Blue-Green, and replica-based canary ([demo 1](demo1/)–[demo 3](demo3/)):
+- **Rolling:** one Route to the Service
+- **Blue-Green:** two Routes (active + preview); the Rollout switches which pods sit behind each Service
+- **Canary (demo 3):** two Routes, each 100% to one Service; selectors change, Route weights do not
 
-**Traffic Management Integration:**
-For exact percentage-based traffic splitting in Canary deployments, configure Argo Rollouts with OpenShift Route traffic management. This allows Routes to split traffic (e.g., 20% to canary, 80% to stable) regardless of replica count.
+Exact HTTP percentages are [demo 4](demo4/): Gateway API HTTPRoute weights at the waypoint, not Route-to-app weights.
 
-See: https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/openshift/
+See: https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/
 
 ---
 
@@ -447,9 +440,9 @@ Use Rollouts for traditional microservices; use Knative's features for serverles
 - Gradual migration is recommended (no rush)
 
 **Next Steps:**
-1. Read [conversion-example.md](conversion-example.md) for practical examples
-2. Pick a simple non-prod app to try
-3. Review [PRESENTATION_FLOW.md](PRESENTATION_FLOW.md) for demo walkthroughs
+1. Read the conversion steps in [README.md](README.md)
+2. Run [demo 1](demo1/)–[demo 4](demo4/) in order
+3. Pick a simple non-prod app to try
 4. Test on dev/staging before production
 
 **Questions?** Check the resources above or ask your platform team.

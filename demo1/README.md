@@ -4,6 +4,14 @@
 
 **Key Message:** Migration from DC to Rollout is mostly a YAML change; no application code changes needed.
 
+**Namespace:** `argo-rollouts-demo-1`
+
+---
+
+## Namespace
+
+If you skipped `./0_bootstrap.sh`, apply namespaces once: `oc apply -f ../demo0-prep/namespace.yaml`.
+
 ---
 
 ## Visual Comparison: Before → After
@@ -46,9 +54,9 @@ spec:
   # No triggers (replaced by GitOps)
   strategy:
     canary:                  # ← New control mechanism
+      maxSurge: "25%"
+      maxUnavailable: "25%"
       steps: []              # Empty = rolling-update behavior
-      maxSurge: 25%
-      maxUnavailable: 25%
 ```
 
 **What changed:**
@@ -59,47 +67,45 @@ spec:
 
 ---
 
-## Apply Demo
+## Apply
 
-### 1. Create resources
+From `demo1/`:
+
 ```bash
-oc apply -f service.yaml
-oc apply -f rollout.yaml
-oc apply -f route.yaml
+oc apply -f .
 ```
 
-### 2. Watch rollout status
+Watch status:
+
 ```bash
-oc argo rollouts get rollout rollo-demo-1 -n rollo-demo --watch
+oc argo rollouts get rollout rollo-demo-1 -n argo-rollouts-demo-1 --watch
 ```
 
 **What you'll see:**
 - Rollout: Healthy
 - ReplicaSet: 1 (current revision)
 - Pods: 3/3 ready
+- Image: `quay.io/modzelewski/rollo:v1` (blue-style UI)
 
 ---
 
-## Trigger New Version (v2)
+## Trigger v2
 
-### Option 1: Using oc argo rollouts (recommended for demo)
+Live demo (in-cluster image change):
+
 ```bash
-oc argo rollouts set image rollo-demo-1 rollo=quay.io/modzelewski/rollo:v2 -n rollo-demo
+oc argo rollouts set image rollo-demo-1 rollo=quay.io/modzelewski/rollo:v2 -n argo-rollouts-demo-1
 ```
 
-### Option 2: Edit manifest and apply (GitOps way)
-```bash
-# Edit rollout.yaml: change image to quay.io/modzelewski/rollo:v2
-oc apply -f rollout.yaml
-```
+In production, GitOps does the same thing: change the image in Git (or `oc apply -f rollout.yaml`) and the controller rolls out.
 
 **What happens:**
 1. New ReplicaSet created for v2
-2. Pods roll out one by one (respecting maxSurge/maxUnavailable)
+2. Pods roll (3 replicas, `maxSurge`/`maxUnavailable` 25% → at most 1 extra pod / 1 unavailable)
 3. Old ReplicaSet scaled down
-4. No manual promotion needed (canary with empty steps = automatic)
+4. No pause, no promote — empty canary steps finish automatically
 
-**Watch the rollout in the terminal** (Pane A)—you'll see:
+**Watch the rollout** (same `--watch` command)—you'll see:
 - New ReplicaSet appears
 - Pods transition from v1 to v2
 - Rollout completes: Healthy, all replicas on v2
@@ -108,29 +114,23 @@ oc apply -f rollout.yaml
 
 ## Access the Application
 
-Get the Route URL:
 ```bash
-oc get route rollo-demo-1 -n rollo-demo
+oc get route rollo-demo-1 -n argo-rollouts-demo-1
 ```
 
-Open the URL in your browser to see the application UI.
+Open the URL: v1 is blue-style UI, v2 is yellow-style UI.
 
 ---
 
-## Rollback to v1 (if needed)
+## Rollback (optional)
+
+If you need to go back to v1:
 
 ```bash
-oc argo rollouts undo rollo-demo-1 -n rollo-demo
+oc argo rollouts undo rollo-demo-1 -n argo-rollouts-demo-1
 ```
 
 Or in GitOps: revert the Git commit that changed the image.
-
----
-
-## Images
-
-- `quay.io/modzelewski/rollo:v1` – first version (blue-style UI)
-- `quay.io/modzelewski/rollo:v2` – second version (yellow-style UI)
 
 ---
 
@@ -138,15 +138,16 @@ Or in GitOps: revert the Git commit that changed the image.
 
 1. **Same pod template** as Deployment/DeploymentConfig—no app changes
 2. **New resource kind** (Rollout) with configurable strategy
-3. **"New image" flow:**
+3. **One Service, one Route** — no preview, no promote, no Service Mesh
+4. **"New image" flow:**
    - DeploymentConfig: ImageChange trigger → auto-deploys
    - Rollout: GitOps updates spec → controller rolls out (same outcome, better audit trail)
-4. **Rolling update** is just "canary with no steps"—simple migration path
+   - Live demo uses `set image` so you can watch ReplicaSets move
+5. **Rolling update** is just "canary with no steps"—simple migration path
 
 ---
 
 ## Next Steps
 
-- Try **Demo 2** for Blue-Green (preview-then-promote)
-- Try **Demo 3** for Canary with steps (progressive rollout)
-- See [../conversion-example.md](../conversion-example.md) for more DC → Rollout examples
+- Try **[Demo 2](../demo2/)** for Blue-Green (preview-then-promote)
+- See **[FAQ.md](../FAQ.md)** for ImageChange triggers, hooks, and other migration questions

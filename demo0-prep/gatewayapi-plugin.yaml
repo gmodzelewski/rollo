@@ -1,0 +1,51 @@
+# Cluster-once: Argo Rollouts Gateway API traffic plugin + HTTPRoute RBAC.
+# Connectivity Link is NOT installed here (already on the cluster; it is policy, not the proxy).
+#
+# 1. Apply this file (RBAC).
+# 2. Add gatewayAPI to your EXISTING RolloutManager. List ONLY this extra plugin.
+#    The operator already injects argoproj-labs/openshift into the ConfigMap.
+#    Putting that built-in plugin in spec.plugins makes Reconciled=False
+#    ("cannot be modified or added through the RolloutManager CR") and the
+#    Gateway API plugin never lands.
+#
+#    oc get rolloutmanager -A
+#    oc edit rolloutmanager <name> -n <ns>
+#
+#    spec:
+#      plugins:
+#        trafficManagement:
+#          - name: argoproj-labs/gatewayAPI
+#            location: https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi/releases/download/v0.16.0/gatewayapi-plugin-linux-amd64
+#
+#    Restart the rollouts Deployment after the ConfigMap lists gatewayAPI.
+#
+# If your Rollouts ServiceAccount is not openshift-gitops/argo-rollouts, edit the
+# ClusterRoleBinding subject before apply.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: argo-rollouts-gatewayapi-httproutes
+  labels:
+    app.kubernetes.io/part-of: rollo-demos
+rules:
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get"]
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["httproutes", "grpcroutes"]
+    verbs: ["get", "list", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: argo-rollouts-gatewayapi-httproutes
+  labels:
+    app.kubernetes.io/part-of: rollo-demos
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-rollouts-gatewayapi-httproutes
+subjects:
+  - kind: ServiceAccount
+    name: argo-rollouts
+    namespace: openshift-gitops
